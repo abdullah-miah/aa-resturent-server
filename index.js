@@ -27,9 +27,22 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
     
+    const usersCollection = client.db("aADb").collection("users");
     const menuCollection = client.db("aADb").collection("menu");
     const reviewCollection = client.db("aADb").collection("reviews");
     const cartCollection = client.db("aADb").collection("carts");
+    
+    // users related apis
+    app.post('/users', async(req,res)=>{
+      const user = req.body;
+      const query ={email: user.email};
+      const existingUser = await usersCollection.findOne(query);
+      if(existingUser){
+        return res.send({message: 'User already exist'})
+      }
+      const result = await usersCollection.insertOne(user);
+      res.send(result);
+    })
 
     // menu get api
    app.get('/menu', async(req,res)=>{

@@ -1,5 +1,6 @@
 const express = require('express');
 const app = express();
+const jwt = require('jsonwebtoken');
 const cors = require('cors');
 require('dotenv').config()
 const port = process.env.Port || 5000;
@@ -32,7 +33,17 @@ async function run() {
     const reviewCollection = client.db("aADb").collection("reviews");
     const cartCollection = client.db("aADb").collection("carts");
     
+    app.post('/jwt', (req,res)=>{
+      const user = req.body;
+      
+    })
+
     // users related apis
+    app.get('/users', async(req,res)=>{
+      const result = await usersCollection.find().toArray();
+      res.send(result);
+    })
+
     app.post('/users', async(req,res)=>{
       const user = req.body;
       const query ={email: user.email};
@@ -43,7 +54,19 @@ async function run() {
       const result = await usersCollection.insertOne(user);
       res.send(result);
     })
-
+  /// make admin
+    app.patch('/users/admin/:id', async(req,res)=>{
+      const id = req.params.id;
+      const filter = {_id: new ObjectId(id)};
+      const updateDoc = {
+        $set:{
+          role: 'admin'
+        }
+      };
+      const result = await usersCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    })
+     
     // menu get api
    app.get('/menu', async(req,res)=>{
      const result = await menuCollection.find().toArray();

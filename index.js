@@ -14,18 +14,18 @@ app.use(express.json());
 const verifyJWT =(req,res,next)=>{
   const authorization = req.headers.authorization;
   if(!authorization){
-    return res.status(401).send({error: true, message: 'unauthorized access'});
+    return res.status(401).send({error: true, message: "unauthorized access"});
   }
-  // bearer token
-const token = authorization.split('')[1];
+   
+  const token = authorization.split(' ')[1];
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded)=>{
+    if(err){
+      return res.status(401).send({error: true, message: "unauthorized access"})
+    }
+    req.decoded = decoded;
+    next()
+  })
 
-jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded)=>{
-  if(err){
-    return res.status(401).send({error: true, message: 'unauthorized access'})
-  }
-  req.decoded = decoded;
-  next();
-})
 }
 
 
@@ -59,7 +59,10 @@ async function run() {
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
       res.send({token})
     })
-
+       /***
+        * 1. use jwt token : verifyJWT
+        * 
+        * * */
     // users related apis
     app.get('/users', async(req,res)=>{
       const result = await usersCollection.find().toArray();
@@ -88,7 +91,21 @@ async function run() {
       const result = await usersCollection.updateOne(filter, updateDoc);
       res.send(result);
     })
-     
+   
+    //security layer: verifyJWT
+    // email same
+    // check admin
+
+     app.get('/users/admin/:email', async (req,res)=>{
+      const email = req.params.email;
+      if(req.decoded.email !== email){
+        res.send({admin: false})
+      }
+      const query = {email: email};
+      const user = await usersCollection.findOne(query)
+      const result = {admin: user?.role === 'admin'}
+      res.send(result);
+     })
     // menu get api
    app.get('/menu', async(req,res)=>{
      const result = await menuCollection.find().toArray();
